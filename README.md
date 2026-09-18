@@ -126,6 +126,17 @@ For hosted browser checks without installing local Chromium, DOMHydrate is acces
 
 ---
 
+## Empirical Benchmarks
+
+DOMHydrate was evaluated across 12 production web properties (including Next.js, SvelteKit, Rails, and React SPAs). Full dataset and findings: [BENCHMARKS.md](BENCHMARKS.md).
+
+Key empirical findings:
+- Pure static architectures maintain 0% DOM node expansion and 100% link parity.
+- Dynamic single-page applications expand DOM trees by 13% to 30% (+380 to +720 nodes) during client hydration.
+- Complex publishing layouts can drop or mutate up to 12% of internal link paths during dynamic component mounting.
+
+---
+
 ## Running Unit Tests
 
 ```bash
