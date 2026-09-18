@@ -128,7 +128,7 @@ For hosted browser checks without installing local Chromium, DOMHydrate is acces
 
 ## Empirical Benchmarks
 
-DOMHydrate was evaluated across 12 production web properties (including Next.js, SvelteKit, Rails, and React SPAs). Full dataset and findings: [BENCHMARKS.md](BENCHMARKS.md).
+DOMHydrate was evaluated while beta testing on random sites (including Next.js, SvelteKit, Rails, and React SPAs). Full dataset and findings: [BENCHMARKS.md](BENCHMARKS.md).
 
 Key empirical findings:
 - Pure static architectures maintain 0% DOM node expansion and 100% link parity.

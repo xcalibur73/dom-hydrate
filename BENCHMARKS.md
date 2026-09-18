@@ -1,12 +1,12 @@
 # DOMHydrate: Empirical 12-Site Hydration Benchmark
 
-Empirical evaluation of client-side hydration discrepancies, DOM node expansion, and link graph parity across 12 production web properties.
+Empirical evaluation of client-side hydration discrepancies, DOM node expansion, and link graph parity gathered while beta testing on random sites.
 
 ---
 
 ## Methodology
 
-Each site was audited using DOMHydrate v1.0.0 with native Chromium (`--headless=new --dump-dom`). Audits captured:
+Evaluated while beta testing on random sites using DOMHydrate v1.0.0 with native Chromium (`--headless=new --dump-dom`). Telemetry captured:
 1. Initial server HTML payload via raw HTTP request.
 2. Fully rendered client DOM after JavaScript execution and a 3,000ms hydration buffer.
 3. Server TTFB and browser rendering duration.
