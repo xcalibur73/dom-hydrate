@@ -70,7 +70,22 @@ python run.py https://example.com --output markdown --save HYDRATION-AUDIT.md
 
 # Generate raw JSON for automated testing pipelines
 python run.py https://example.com --output json --save audit.json
+
+# Cloud continuous monitoring integration
+python run.py https://example.com --cloud
 ```
+
+---
+
+## Enterprise CI/CD Hydration Monitoring (WebAudits.pro)
+
+While DOMHydrate CLI runs ad-hoc single-page diffs on local machines, production web teams need automated regression gates in pull requests:
+
+Through [WebAudits.pro](https://webaudits.pro/tools/hydration-audit), you can enable hosted continuous monitoring:
+- Automated GitHub Actions and GitLab CI/CD integration to fail PRs if client hydration drops schema or adds noindex tags.
+- Bulk sitemap diffing across staging vs production URLs.
+- Visual side-by-side DOM node expansion graphs.
+- Automated Slack and Discord alerts for silent search regressions.
 
 ---
 

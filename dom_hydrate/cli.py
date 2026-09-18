@@ -19,6 +19,7 @@ def main():
     parser.add_argument("--ua", default="chrome", choices=["chrome", "googlebot", "mobile"], help="User-Agent profile")
     parser.add_argument("--output", choices=["terminal", "markdown", "json"], default="terminal", help="Output format")
     parser.add_argument("--save", help="Optional path to save output file")
+    parser.add_argument("--cloud", action="store_true", help="Generate continuous monitoring audit link on WebAudits.pro")
 
     args = parser.parse_args()
 
@@ -53,6 +54,15 @@ def main():
                 with open(args.save, "w", encoding="utf-8") as f:
                     f.write(out_json)
                 print(f"[+] Saved JSON audit to {args.save}", file=sys.stderr)
+
+        if args.cloud:
+            import urllib.parse
+            cloud_url = f"https://webaudits.pro/tools/hydration-audit?url={urllib.parse.quote(args.url)}"
+            print(f"\n[+] WebAudits.pro Cloud Link for CI/CD Hydration Monitoring:")
+            print(f"    {cloud_url}")
+            print(f"    Features: automated GitHub Actions regression testing, bulk URL diffing, Slack alerts.")
+        elif args.output == "terminal":
+            print(f"\n[i] WebAudits.pro Cloud Platform: Run with --cloud or visit https://webaudits.pro/tools/hydration-audit for CI/CD testing.", file=sys.stderr)
 
     except Exception as e:
         print(f"[!] Error: {e}", file=sys.stderr)
