@@ -1,12 +1,12 @@
-# DOMHydrate: Empirical 12-Site Hydration Benchmark
+# DOMHydrate: 12-Site SSR vs CSR Hydration Parity Study
 
-Empirical evaluation of client-side hydration discrepancies, DOM node expansion, and link graph parity gathered while beta testing on random sites.
+Comparative evaluation of client-side hydration discrepancies, DOM node expansion, and link graph parity across 12 production websites gathered during local testing.
 
 ---
 
 ## Methodology
 
-Evaluated while beta testing on random sites using DOMHydrate v1.0.0 with native Chromium (`--headless=new --dump-dom`). Telemetry captured:
+Evaluated using DOMHydrate v1.0.0 with native Chromium (`--headless=new --dump-dom`). Telemetry captured:
 1. Initial server HTML payload via raw HTTP request.
 2. Fully rendered client DOM after JavaScript execution and a 3,000ms hydration buffer.
 3. Server TTFB and browser rendering duration.
@@ -36,13 +36,13 @@ Testing environment: Windows 11, Chrome 128.0, 1 Gbps fiber connection, 2026-09-
 
 ---
 
-## Key Engineering Findings
+## Key Engineering Observations
 
 ### 1. DOM Node Inflation in Heavy Single-Page Applications
-Static-first architectures (`webaudits.pro`, `python.org`, `wikipedia.org`) maintain 0.0% node expansion between server response and client render. Heavy interactive frameworks expand DOM trees by 13% to 30%, adding between 380 and 720 additional nodes during hydration. This directly impacts main-thread memory allocation and raises Interaction to Next Paint (INP) latency.
+Static-first architectures (`webaudits.pro`, `python.org`, `wikipedia.org`) maintain 0.0% node expansion between server response and client render. Heavy interactive frameworks expand DOM trees by 13% to 30%, adding between 380 and 720 additional nodes during hydration.
 
 ### 2. Client-Side Link Graph Mutation
-In content-heavy publishing architectures (`theverge.com`), 14 internal links visible in server HTML were replaced or mutated during client-side hydration due to personalized ad unit injection and dynamic tab switching. Crawlers operating without JavaScript execution observe a different link equity graph than desktop browser users.
+In dynamic publishing layouts (`theverge.com`), 14 internal links visible in server HTML were replaced or mutated during client-side hydration due to asynchronous component mounting. Crawlers operating without full JavaScript execution observe a different link structure than browser users.
 
 ### 3. Structured Data Stability
-Across all 12 properties tested, Schema.org JSON-LD blocks remained intact during client hydration. The primary risk observed in smaller CMS implementations involves client routers re-mounting root layouts and overwriting head tags, which DOMHydrate tests automatically on every audit run.
+Across all 12 properties tested, Schema.org JSON-LD blocks remained intact during client hydration. The primary risk observed in smaller single-page applications involves client routers re-mounting root layouts and overwriting head elements.
