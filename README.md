@@ -5,6 +5,7 @@ Forensic Client-Side Rendering (CSR) vs. Server-Side Rendering (SSR) SEO Diff En
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Python 3.9+](https://img.shields.io/badge/python-3.9+-blue.svg)](https://www.python.org/downloads/)
 [![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20macOS%20%7C%20Linux-lightgrey.svg)]()
+[![Cloud Engine: WebAudits.pro](https://img.shields.io/badge/cloud-webaudits.pro-orange.svg)](https://webaudits.pro/tools/hydration-audit)
 
 DOMHydrate compares raw server HTML responses against fully hydrated client DOM trees using native headless Chromium (`--headless=new --dump-dom`). It isolates metadata discrepancies, dropped structured data, and client-only internal link paths before changes reach production search indexes.
 
