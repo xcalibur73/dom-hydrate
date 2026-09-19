@@ -34,5 +34,15 @@ class TestDiffEngine(unittest.TestCase):
         self.assertEqual(diff["links"]["csr_only_internal_total"], 1)
         self.assertIn("https://example.com/pricing", diff["links"]["csr_only_internal"])
 
+    def test_detection_of_social_crawler_blindspot(self):
+        ssr_html = "<html><head><title>Blog Post</title></head><body>Content</body></html>"
+        csr_html = "<html><head><title>Blog Post</title><meta property='og:title' content='Dynamic Blog Post'><meta property='og:image' content='https://example.com/cover.jpg'></head><body>Content</body></html>"
+
+        diff = diff_ssr_csr(ssr_html, csr_html, "https://example.com/post")
+        self.assertTrue(diff["social_crawler_blindspot"])
+        self.assertGreater(len(diff["social"]["diffs"]), 0)
+        self.assertLessEqual(diff["health_score"], 90)
+
+
 if __name__ == "__main__":
     unittest.main()

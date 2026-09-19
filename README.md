@@ -36,6 +36,7 @@ DOMHydrate isolates discrepancies between what the server emits and what the cli
 - **Directive Regressions:** Mismatches in `<title>`, `<meta name="description">`, `<link rel="canonical">`, and `<meta name="robots">`.
 - **Client-Side `noindex` Injections:** High-severity alert when client JavaScript injects restrictive indexation directives post-mount.
 - **Structured Data Drops:** Schema.org JSON-LD scripts present in server HTML but removed or malformed during client hydration.
+- **Social Crawler Parity:** Detects Open Graph (`og:*`) and Twitter Card (`twitter:*`) tags populated only during client-side hydration, which cause blank previews on non-JavaScript social bots (Facebook, X, LinkedIn, Slack).
 - **Link Graph Parity:** Internal links added, mutated, or removed by client scripts.
 - **DOM Tree Expansion:** Quantifies node inflation between initial HTML and fully mounted layouts.
 

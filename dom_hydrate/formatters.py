@@ -88,6 +88,39 @@ def print_terminal_report(diff: Dict[str, Any], fetch_meta: Dict[str, Any], rend
 
     console.print(table)
 
+    # Social Crawler Parity Table
+    social_data = diff.get("social", {})
+    if social_data.get("ssr") or social_data.get("csr"):
+        soc_table = Table(title="Social Crawler Parity (Open Graph & Twitter Cards)", show_header=True, header_style="bold magenta")
+        soc_table.add_column("Property / Tag", style="cyan")
+        soc_table.add_column("Raw Server (SSR)", style="white")
+        soc_table.add_column("Hydrated Browser (CSR)", style="white")
+        soc_table.add_column("Social Bot Parity", style="bold")
+
+        diff_tags = {d["tag"]: d for d in social_data.get("diffs", [])}
+        for tag in ["og:title", "og:description", "og:image", "og:url", "twitter:card"]:
+            s_val = social_data.get("ssr", {}).get(tag, "")
+            c_val = social_data.get("csr", {}).get(tag, "")
+            if tag in diff_tags:
+                d = diff_tags[tag]
+                if d.get("blindspot"):
+                    status = "[red]BLINDSPOT (Missing SSR)[/red]"
+                else:
+                    status = "[yellow]DRIFT[/yellow]"
+            elif s_val:
+                status = "[green]PARITY[/green]"
+            else:
+                status = "[dim]NOT SET[/dim]"
+
+            s_disp = (_safe_str(s_val)[:40] + "...") if len(s_val) > 40 else (_safe_str(s_val) or "[dim]empty[/dim]")
+            c_disp = (_safe_str(c_val)[:40] + "...") if len(c_val) > 40 else (_safe_str(c_val) or "[dim]empty[/dim]")
+            soc_table.add_row(tag, s_disp, c_disp, status)
+
+        console.print(soc_table)
+
+    if diff.get("social_crawler_blindspot"):
+        console.print(Panel("[yellow]WARNING: Social Crawler Blindspot Detected! Open Graph / Twitter tags are populated only during client-side hydration. Non-JavaScript social crawlers (Facebook, X, LinkedIn, Slack) will see blank previews.[/yellow]", border_style="yellow"))
+
     # Structured Data Table
     schema_table = Table(title="Structured Data (Schema.org JSON-LD)", show_header=True, header_style="bold yellow")
     schema_table.add_column("Metric", style="cyan")

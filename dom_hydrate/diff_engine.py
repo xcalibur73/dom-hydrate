@@ -32,12 +32,31 @@ def extract_metadata(soup: BeautifulSoup) -> Dict[str, Any]:
     # H1
     h1s = [normalize_text(h.text) for h in soup.find_all("h1")]
 
+    # Open Graph & Twitter Cards (Social Crawler Parity)
+    def get_meta_prop(prop_name: str) -> str:
+        el = soup.find("meta", attrs={"property": lambda x: x and x.lower() == prop_name.lower()})
+        if not el:
+            el = soup.find("meta", attrs={"name": lambda x: x and x.lower() == prop_name.lower()})
+        return normalize_text(el.get("content", "")) if el else ""
+
+    social_tags = {
+        "og:title": get_meta_prop("og:title"),
+        "og:description": get_meta_prop("og:description"),
+        "og:image": get_meta_prop("og:image"),
+        "og:url": get_meta_prop("og:url"),
+        "twitter:card": get_meta_prop("twitter:card"),
+        "twitter:title": get_meta_prop("twitter:title"),
+        "twitter:description": get_meta_prop("twitter:description"),
+        "twitter:image": get_meta_prop("twitter:image"),
+    }
+
     return {
         "title": title,
         "meta_description": meta_desc,
         "meta_robots": meta_robots,
         "canonical": canonical,
-        "h1s": h1s
+        "h1s": h1s,
+        "social_tags": social_tags
     }
 
 def extract_json_ld(soup: BeautifulSoup) -> List[Dict[str, Any]]:
@@ -124,7 +143,23 @@ def diff_ssr_csr(ssr_html: str, csr_html: str, base_url: str) -> Dict[str, Any]:
     if "noindex" in csr_meta["meta_robots"].lower() and "noindex" not in ssr_meta["meta_robots"].lower():
         robots_danger = True
 
-    # 2. JSON-LD Schemas
+    # 2. Social Crawler Parity (Open Graph & Twitter Cards)
+    social_diffs = []
+    ssr_social = ssr_meta.get("social_tags", {})
+    csr_social = csr_meta.get("social_tags", {})
+    for tag_name, s_val in ssr_social.items():
+        c_val = csr_social.get(tag_name, "")
+        if s_val != c_val:
+            social_diffs.append({
+                "tag": tag_name,
+                "ssr": s_val,
+                "csr": c_val,
+                "blindspot": not bool(s_val) and bool(c_val)
+            })
+
+    social_crawler_blindspot = any(d["blindspot"] for d in social_diffs)
+
+    # 3. JSON-LD Schemas
     ssr_schemas = extract_json_ld(ssr_soup)
     csr_schemas = extract_json_ld(csr_soup)
 
@@ -164,6 +199,8 @@ def diff_ssr_csr(ssr_html: str, csr_html: str, base_url: str) -> Dict[str, Any]:
         score -= 40
     if meta_diffs:
         score -= min(30, len(meta_diffs) * 10)
+    if social_crawler_blindspot:
+        score -= 10
     if dropped_schemas:
         score -= min(25, len(dropped_schemas) * 15)
     if dropped_internal:
@@ -175,10 +212,17 @@ def diff_ssr_csr(ssr_html: str, csr_html: str, base_url: str) -> Dict[str, Any]:
         "url": base_url,
         "health_score": score,
         "robots_danger": robots_danger,
+        "social_crawler_blindspot": social_crawler_blindspot,
         "metadata": {
             "ssr": ssr_meta,
             "csr": csr_meta,
             "diffs": meta_diffs
+        },
+        "social": {
+            "ssr": ssr_social,
+            "csr": csr_social,
+            "diffs": social_diffs,
+            "has_blindspot": social_crawler_blindspot
         },
         "schemas": {
             "ssr_count": len(ssr_schemas),
