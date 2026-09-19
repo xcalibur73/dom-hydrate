@@ -1,162 +1,204 @@
 # DOMHydrate
 
-Forensic Client-Side Rendering (CSR) vs. Server-Side Rendering (SSR) SEO Diff Engine
+Forensic CSR vs. SSR SEO diff engine with headless Chromium DOM dumping.
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
-[![Python 3.9+](https://img.shields.io/badge/python-3.9+-blue.svg)](https://www.python.org/downloads/)
-[![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20macOS%20%7C%20Linux-lightgrey.svg)]()
-[![Cloud Engine: WebAudits.pro](https://img.shields.io/badge/cloud-webaudits.pro-orange.svg)](https://webaudits.pro/tools/hydration-audit)
-
-DOMHydrate compares raw server HTML responses against fully hydrated client DOM trees using native headless Chromium (`--headless=new --dump-dom`). It isolates metadata discrepancies, dropped structured data, and client-only internal link paths before changes reach production search indexes.
+Part of the [WebAudits.pro](https://webaudits.pro) technical intelligence platform.
 
 ---
 
-## Hydration Discrepancies in Modern Frameworks
+## What it does
 
-Modern JavaScript frameworks (Next.js, Nuxt, React, Vue, Angular, Svelte) produce two distinct document states:
-1. Initial server response (SSR): What search crawlers receive on initial HTTP requests.
-2. Hydrated browser DOM (CSR): What users and Googlebot Web Rendering Service (WRS) observe after executing client-side scripts.
-
-Client-side state stores and router transitions can introduce silent regressions during this handoff:
-- Dropped structured data: Schema.org JSON-LD blocks present in server HTML get cleared or overwritten when client components mount.
-- Client-only links: Internal links rendered solely via client-side components remain invisible to crawlers that do not execute full JavaScript queues.
-- Dynamic noindex injection: Single-page application route guards inadvertently inject `<meta name="robots" content="noindex">` during state initialization.
-- DOM node expansion: Heavy client components inflate the DOM tree, increasing memory consumption and degrading Interaction to Next Paint (INP).
-
-DOMHydrate performs an automated side-by-side diff between these two states to pinpoint exact discrepancies.
+DOMHydrate compares raw server-rendered HTML (SSR) against the fully hydrated browser Document Object Model (CSR) rendered by headless Chromium. It detects:
+- Metadata and directive parity regressions (`<title>`, `<meta name="description">`, `<link rel="canonical">`, `<meta name="robots">`).
+- Client-side injection of restrictive directives (such as `noindex` or `nofollow` added during hydration).
+- Structured data drops (Schema.org JSON-LD scripts present in server HTML but removed or malformed client-side).
+- Link graph expansion and mutation (internal links that appear or disappear after JavaScript execution).
+- DOM tree inflation and node count expansion between initial payload and final layout.
 
 ---
 
-## Technical Capabilities
+## Why it exists
 
-- Metadata and directive diffing: compares `<title>`, `<meta name="description">`, `<link rel="canonical">`, and `<meta name="robots">`. Flags any dynamic `noindex` injection or canonical destination shift.
-- Structured data extraction: parses all `<script type="application/ld+json">` elements, evaluates Schema.org `@type` hierarchies, and alerts if schemas disappear after hydration.
-- Link graph audit: identifies internal links that exist only in the hydrated DOM, surfacing crawl equity bottlenecks.
-- DOM footprint analysis: measures element count expansion, text-to-HTML ratio changes, and hydration time budgets.
-- Local execution: operates directly through native Chrome, Chromium, or Edge binaries without third-party API keys or subscription fees.
-- Automation support: outputs structured JSON (`--output json`) and Markdown summaries (`--output markdown`) for CI/CD test runners.
+Modern JavaScript frameworks (Next.js, Nuxt, Remix, SvelteKit, Angular) deliver an initial server-rendered HTML string that client-side hydration then mounts and mutates. Search engine crawlers do not execute JavaScript uniformly:
+- Googlebot executes JavaScript in a deferred secondary indexing wave when rendering resources become available.
+- Other search engines (Bing, Yahoo, DuckDuckGo, regional engines) and AI retrieval bots (OAI-SearchBot, Claude-SearchBot, PerplexityBot) often index only the initial server response.
+
+When critical SEO directives, canonical tags, or structured data exist only in client-hydrated markup (or get dropped by rogue client scripts), indexation mismatches occur. DOMHydrate isolates these discrepancies locally or in CI pipelines before deployment.
+
+---
+
+## Key features
+
+- **Dual-State Capture:** Fetches initial server markup via raw HTTP request and renders hydrated DOM using native Chromium (`--headless=new --dump-dom`).
+- **Configurable Hydration Buffer:** Configurable post-navigation rendering delay (default: 4,000ms) to ensure asynchronous data fetches and hydration cycles complete.
+- **User-Agent Emulation:** Supports desktop Chrome, Googlebot desktop, and Googlebot smartphone crawler profiles.
+- **Critical Danger Alert:** Immediate warning if client-side hydration injects a `noindex` tag onto an otherwise indexable page.
+- **Multiple Output Formats:** Formatted terminal tables via Rich, machine-readable JSON for CI/CD gates, and Markdown summaries.
+
+---
+
+## Architecture
+
+```text
+[Target URL]
+     |
+     +---> [HTTP Fetcher] --------------> Raw SSR HTML --------+
+     |                                                         |
+     +---> [Headless Chromium (--dump-dom)] -> Hydrated CSR DOM +
+                                                               |
+                                                               v
+                                                      [DOM Diff Engine]
+                                                               |
+                     +-----------------------------------------+-----------------------------------------+
+                     |                                         |                                         |
+                     v                                         v                                         v
+            [Metadata & Directives]                   [Schema.org Blocks]                       [Link Graph & Nodes]
+```
+
+DOMHydrate operates in three stages:
+1. `fetcher.py`: Performs an HTTP GET request with the specified crawler User-Agent, capturing raw server response body, TTFB, and headers.
+2. `renderer.py`: Launches headless Chromium with `--headless=new`, disables GPU acceleration, waits for network idle, and extracts serialized DOM via `--dump-dom`.
+3. `diff_engine.py`: Parses both trees using BeautifulSoup, normalizes whitespace and attributes, and computes categorical diffs across metadata, Schema.org entities, internal links, and DOM node counts.
 
 ---
 
 ## Installation
 
+### Prerequisites
+- Python 3.10 or higher
+- Google Chrome or Chromium installed and available in system PATH
+
+### Install from Source
 ```bash
 git clone https://github.com/xcalibur73/dom-hydrate.git
 cd dom-hydrate
 pip install -r requirements.txt
+pip install -e .
 ```
 
 ---
 
-## Quick Start
+## Usage
 
-### Basic Audit
+### Basic CLI Invocation
 ```bash
-python run.py https://example.com
-```
+# Audit a live URL
+dom-hydrate https://webaudits.pro
 
-### Audit with Custom Hydration Wait Time
-```bash
-python run.py https://your-spa-site.com --wait 5000
-```
+# Emulate Googlebot smartphone crawler
+dom-hydrate https://webaudits.pro --ua mobile
 
-### Simulate Googlebot User-Agent
-```bash
-python run.py https://your-spa-site.com --ua googlebot
-```
+# Increase hydration wait buffer for heavy SPAs (6,000ms)
+dom-hydrate https://example.com --wait 6000
 
-### Export Reports
-```bash
-# Save Markdown report
-python run.py https://example.com --output markdown --save HYDRATION-AUDIT.md
+# Export structured JSON for CI/CD pipeline
+dom-hydrate https://example.com --output json --save audit.json
 
-# Save JSON output for automated CI pipelines
-python run.py https://example.com --output json --save audit.json
-
-# Web platform diagnostic reference
-python run.py https://example.com --cloud
+# Check installed version
+dom-hydrate --version
 ```
 
 ---
 
-## Web Platform Integration (WebAudits.pro)
-
-For hosted browser checks without installing local Chromium, DOMHydrate is accessible online:
-- Interactive web tool: [WebAudits.pro/tools/hydration-audit](https://webaudits.pro/tools/hydration-audit)
-- Continuous monitoring and sitemap diffing options for agency workflows.
-
----
-
-## Sample Output
+## Example output
 
 ```text
-+-----------------------------------------------------------------------------+
-| DOMHydrate: CSR vs. SSR SEO Diff Engine                                     |
-| Target: https://example.com                                                 |
-| Hydration Health Score: 100/100                                             |
-| SSR TTFB: 82.81ms | Browser Render Time: 699.65ms                           |
-+-----------------------------------------------------------------------------+
-                      Metadata & Directives Parity                       
-+-----------------------------------------------------------------------+
-| Directive / Tag  | Raw Server (SSR) | Hydrated Browser (CSR) | Status |
-|------------------+------------------+------------------------+--------|
-| title            | Store Catalog    | Store Catalog          | PARITY |
-| meta_description | Official Catalog | Official Catalog       | PARITY |
-| canonical        | https://site.com | https://site.com       | PARITY |
-| meta_robots      | index, follow    | index, follow          | PARITY |
-+-----------------------------------------------------------------------+
- Structured Data (Schema.org JSON-LD)           
-+-----------------------------------------------------------------------+
-| Metric            | Value                                             |
-|-------------------+---------------------------------------------------|
-| SSR Schemas Count | 3                                                 |
-| CSR Schemas Count | 3                                                 |
-| SSR Types         | Organization, WebSite, Product                    |
-| CSR Types         | Organization, WebSite, Product                    |
-+-----------------------------------------------------------------------+
-                          Link Graph & DOM Footprint                          
-+----------------------------------------------------------------------------+
-| Metric                 | SSR (Initial) | CSR (Hydrated) | Differential     |
-|------------------------+---------------+----------------+------------------|
-| Internal Links         | 48            | 52             | +4 client-only   |
-| DOM Elements Count     | 412           | 580            | +168 nodes (+40%)|
-| Text-to-HTML Ratio     | 18.2%         | 15.4%          |                  |
-| Document Payload Bytes | 24,180 B      | 38,910 B       | +14,730 B        |
-+----------------------------------------------------------------------------+
++-------------------------------------------------------------------------------+
+| DOMHydrate: CSR vs. SSR SEO Diff Engine                                       |
+| Target: https://webaudits.pro                                                 |
+| Hydration Health Score: 100.0/100                                             |
+| SSR TTFB: 306ms | Browser Render Time: 1621ms                                 |
++-------------------------------------------------------------------------------+
+
+Metadata & Directives Parity:
++-------------------+--------------------+--------------------+---------+
+| Directive / Tag   | Raw Server (SSR)   | Hydrated (CSR)     | Status  |
++-------------------+--------------------+--------------------+---------+
+| title             | WebAudits.pro -... | WebAudits.pro -... | PARITY  |
+| meta_description  | Comprehensive w... | Comprehensive w... | PARITY  |
+| canonical         | https://webaudi... | https://webaudi... | PARITY  |
+| meta_robots       | index, follow      | index, follow      | PARITY  |
++-------------------+--------------------+--------------------+---------+
+
+Structured Data (Schema.org JSON-LD):
+- SSR Schemas Count: 2
+- CSR Schemas Count: 2
+- Dropped on Hydration: None
+- Injected on Hydration: None
+
+Link Graph & DOM Footprint:
+- SSR Internal Links: 40 | CSR Internal Links: 40 (0 client-only)
+- DOM Node Count: 726 (SSR) vs. 726 (CSR) -> 0.0% node bloat
 ```
 
 ---
 
-## Empirical Benchmarks
+## Benchmark / methodology
 
-DOMHydrate was evaluated while beta testing on random sites (including Next.js, SvelteKit, Rails, and React SPAs). Full dataset and findings: [BENCHMARKS.md](BENCHMARKS.md).
-
-Key empirical findings:
-- Pure static architectures maintain 0% DOM node expansion and 100% link parity.
-- Dynamic single-page applications expand DOM trees by 13% to 30% (+380 to +720 nodes) during client hydration.
-- Complex publishing layouts can drop or mutate up to 12% of internal link paths during dynamic component mounting.
+### Empirical 12-Site Benchmark Study
+- **Dataset:** 12 production web properties across static, hybrid Next.js, and client-heavy single-page architectures (`webaudits.pro`, `nextjs.org`, `github.com`, `linear.app`, `theverge.com`, `shopify.com`, etc.).
+- **Command Used:** `python run.py <url> --output json`
+- **Tool Version:** DOMHydrate v1.0.0
+- **Environment:** Windows 11, Chromium 128.0, Python 3.12, 1 Gbps fiber connection, 2026-09-19.
+- **Raw Telemetry & Calculation:**
+  - Node expansion percentage: `((CSR_nodes - SSR_nodes) / SSR_nodes) * 100`
+  - Link parity ratio: `(CSR_internal_links_matching_SSR / SSR_internal_links) * 100`
+- **Results:**
+  - Static-first architectures (`webaudits.pro`, `python.org`) maintain 0.0% node expansion and 100% link parity.
+  - Interactive single-page apps expand DOM trees by +13% to +30%, adding 380 to 720 additional nodes during hydration.
+  - Complete empirical dataset: [BENCHMARKS.md](BENCHMARKS.md).
 
 ---
 
-## Running Unit Tests
+## Limitations
+
+- **Diagnostic Heuristic:** The Hydration Health Score is a project-derived heuristic and does not guarantee Google indexing status.
+- **Proprietary Renderer Differences:** Googlebot uses a specialized headless Chromium build with dynamic rendering quotas. DOMHydrate uses your local Chromium binary, which accurately reflects modern browser rendering but cannot predict Googlebot rendering timeouts on resource-starved servers.
+- **Session State:** Does not simulate user authentication, localStorage states, or dynamic cookie consent banners unless pre-configured.
+
+---
+
+## Accuracy / standards
+
+DOMHydrate categorizes its diagnostic metrics as follows:
+
+| Metric | Classification | Authority / Standard |
+|:---|:---|:---|
+| Canonical URL Resolution | Google / Web Standard | RFC 6596 |
+| Robots Directives (`noindex`) | Google / Web Standard | Google Search Central Specifications |
+| Schema.org JSON-LD Extraction | Web Standard | W3C JSON-LD 1.1 Standard |
+| DOM Node Expansion Rate | Project-Derived Heuristic | Empirical baseline (0% optimal, >25% risk) |
+| Hydration Health Score | Project-Derived Heuristic | Weighted parity formula (100-point scale) |
+
+---
+
+## Testing
+
+DOMHydrate includes unit tests covering diff calculation, metadata extraction, Schema.org parsing, and danger flag detection:
 
 ```bash
-python -m unittest discover tests/
+# Run unit test suite
+python -m unittest discover -s tests
+
+# Test execution output
+# Ran 3 tests in 0.002s
+# OK
 ```
+
+Continuous integration runs automatically on every commit and pull request across Ubuntu and Windows runners via GitHub Actions.
 
 ---
 
-## Author
+## Roadmap
 
-Maintained by [@xcalibur73](https://github.com/xcalibur73), creator of [WebAudits.pro](https://webaudits.pro).
-
-Part of a technical SEO engineering tooling trio:
-1. [dom-hydrate](https://github.com/xcalibur73/dom-hydrate): Headless Chromium SSR vs CSR DOM diff engine.
-2. [citation-pulse](https://github.com/xcalibur73/citation-pulse): GEO and AI search citability benchmark engine.
-3. [index-trace](https://github.com/xcalibur73/index-trace): Search Console emergency triage and crawler collision tracer.
+- [x] Initial release with CLI and JSON/Markdown export.
+- [x] PEP 621 packaging and Windows cp1252 encoding hardening.
+- [ ] Integration with Playwright for authenticated hydration sessions.
+- [ ] Automated visual regression screenshot diffing during hydration.
+- [ ] WebAudits.pro webhook dispatch for scheduled CI regression alerts.
 
 ---
 
 ## License
 
-Licensed under the [MIT License](LICENSE).
+MIT License. See [LICENSE](LICENSE) for full details.
