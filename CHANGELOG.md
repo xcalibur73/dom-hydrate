@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.0] - 2026-09-19
+
+### Added
+- Open Graph (`og:*`) and Twitter Card (`twitter:*`) social metadata parsing across SSR server HTML and CSR hydrated DOM.
+- Social Crawler Blindspot detection alerting when social preview metadata exists only in hydrated DOM and is missing in raw HTML.
+- Dedicated unit test `test_detection_of_social_crawler_blindspot` verifying social crawler parity auditing.
+
 ## [1.0.0] - 2026-09-19
 
 ### Added
