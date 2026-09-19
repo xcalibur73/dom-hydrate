@@ -79,6 +79,12 @@ dom-hydrate https://example.com --wait 6000
 # Export machine-readable JSON for CI/CD deployment checks
 dom-hydrate https://example.com --output json --save dom-audit.json
 
+# Write a shareable HTML report for a client or teammate
+dom-hydrate https://example.com --format html --save dom-audit.html
+
+# Show the full forensic tables after the plain-language result
+dom-hydrate https://example.com --audience expert --fix-plan
+
 # Check installed version
 dom-hydrate --version
 ```

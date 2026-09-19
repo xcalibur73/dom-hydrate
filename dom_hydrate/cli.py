@@ -8,9 +8,9 @@ import sys
 from .fetcher import fetch_ssr
 from .renderer import render_csr
 from .diff_engine import diff_ssr_csr
-from .formatters import print_terminal_report, export_markdown
+from .formatters import export_html_report, export_markdown, print_terminal_report
 
-def main():
+def main(args: list[str] | None = None) -> int:
     from . import __version__
     parser = argparse.ArgumentParser(
         prog="dom-hydrate",
@@ -24,11 +24,13 @@ def main():
     )
     parser.add_argument("--wait", type=int, default=4000, help="Client-side hydration wait time in ms (default: 4000)")
     parser.add_argument("--ua", default="chrome", choices=["chrome", "googlebot", "mobile"], help="User-Agent profile")
-    parser.add_argument("--output", choices=["terminal", "markdown", "json"], default="terminal", help="Output format")
+    parser.add_argument("--output", "--format", dest="output", choices=["terminal", "markdown", "json", "html"], default="terminal", help="Output format")
+    parser.add_argument("--audience", choices=["human", "expert"], default="human", help="Report detail level")
+    parser.add_argument("--fix-plan", action="store_true", help="Emphasize recommended fixes in terminal output")
     parser.add_argument("--save", help="Optional path to save output file")
     parser.add_argument("--cloud", action="store_true", help="Generate continuous monitoring audit link on WebAudits.pro")
 
-    args = parser.parse_args()
+    args = parser.parse_args(args)
     if not args.url:
         parser.print_help()
         return 0
@@ -44,7 +46,7 @@ def main():
         diff = diff_ssr_csr(ssr_data["html"], csr_data["html"], args.url)
 
         if args.output == "terminal":
-            print_terminal_report(diff, ssr_data, csr_data)
+            print_terminal_report(diff, ssr_data, csr_data, audience=args.audience, fix_plan=args.fix_plan)
         elif args.output == "markdown":
             md = export_markdown(diff, ssr_data, csr_data)
             print(md)
@@ -52,6 +54,13 @@ def main():
                 with open(args.save, "w", encoding="utf-8") as f:
                     f.write(md)
                 print(f"[+] Saved markdown audit to {args.save}", file=sys.stderr)
+        elif args.output == "html":
+            html_report = export_html_report(diff, ssr_data, csr_data)
+            print(html_report)
+            if args.save:
+                with open(args.save, "w", encoding="utf-8") as f:
+                    f.write(html_report)
+                print(f"[+] Saved HTML audit to {args.save}", file=sys.stderr)
         elif args.output == "json":
             combined = {
                 "diff": diff,
@@ -76,7 +85,9 @@ def main():
 
     except Exception as e:
         print(f"[!] Error: {e}", file=sys.stderr)
-        sys.exit(1)
+        return 1
+
+    return 0
 
 if __name__ == "__main__":
-    main()
+    sys.exit(main())

@@ -3,6 +3,8 @@ import os
 import sys
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from dom_hydrate.diff_engine import diff_ssr_csr
+from dom_hydrate.formatters import export_html_report
+from dom_hydrate.human_report import build_human_report
 
 class TestDiffEngine(unittest.TestCase):
     def test_detection_of_client_side_noindex(self):
@@ -42,6 +44,27 @@ class TestDiffEngine(unittest.TestCase):
         self.assertTrue(diff["social_crawler_blindspot"])
         self.assertGreater(len(diff["social"]["diffs"]), 0)
         self.assertLessEqual(diff["health_score"], 90)
+
+    def test_human_report_explains_noindex_risk(self):
+        ssr_html = "<html><head><title>Safe Page</title></head><body>Content</body></html>"
+        csr_html = "<html><head><title>Safe Page</title><meta name='robots' content='noindex'></head><body>Content</body></html>"
+        report = build_human_report(diff_ssr_csr(ssr_html, csr_html, "https://example.com"))
+
+        self.assertEqual(report["status"], "Critical")
+        self.assertIn("index", report["summary"].lower())
+        self.assertIn("Render the intended robots", report["findings"][0]["recommended_fix"])
+
+    def test_html_report_contains_findings_and_technical_evidence(self):
+        diff = diff_ssr_csr(
+            "<html><head><title>Server title</title></head><body>Content</body></html>",
+            "<html><head><title>Client title</title></head><body>Content</body></html>",
+            "https://example.com",
+        )
+        report = export_html_report(diff, {"ttfb_ms": 20}, {"render_time_ms": 100})
+
+        self.assertIn("Findings", report)
+        self.assertIn("Technical evidence", report)
+        self.assertIn("Client title", report)
 
 
 if __name__ == "__main__":
