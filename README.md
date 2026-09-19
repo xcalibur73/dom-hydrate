@@ -42,6 +42,28 @@ DOMHydrate isolates discrepancies between what the server emits and what the cli
 
 ---
 
+## Visual Diagnostic Workflow
+
+```text
+[Input Target URL]
+        |
+        +---> [1. Raw SSR Fetch] ---------> Server HTML: <title>Brand - Product</title>, 1 JSON-LD script
+        |
+        +---> [2. Headless Chromium CSR] -> Hydrated DOM: <title>Welcome to App</title>, 0 JSON-LD scripts
+        |
+        v
+[3. Hydration Differential Isolated]
+        - Structured Data Regression: Client root provider replaced innerHTML, dropping Schema.org block
+        - Social Preview Blindspot: og:image injected via useEffect(), missing in raw HTML for Slack/LinkedIn bots
+        |
+        v
+[4. Recommended Fix]
+        - Move Schema.org JSON-LD generation to server component layout (app/layout.tsx)
+        - Pre-render og:image in root server response metadata export
+```
+
+---
+
 ## Usage & CLI Options
 
 ```bash

@@ -4,16 +4,18 @@ Comparative evaluation of client-side hydration discrepancies, DOM node expansio
 
 ---
 
-## Methodology
+## Benchmark Methodology
 
-Evaluated using DOMHydrate v1.0.0 with native Chromium (`--headless=new --dump-dom`). Telemetry captured:
-1. Initial server HTML payload via raw HTTP request.
-2. Fully rendered client DOM after JavaScript execution and a 3,000ms hydration buffer.
-3. Server TTFB and browser rendering duration.
-4. Total DOM node count differential and expansion percentage.
-5. Internal link graph count and Schema.org JSON-LD structured data parity.
-
-Testing environment: Windows 11, Chrome 128.0, 1 Gbps fiber connection, 2026-09-19.
+- **Dataset:** 12 production domain homepages representing various frontend architectures (Next.js App Router, SvelteKit, Remix, Nuxt, Rails Turbo).
+- **Sampling Method:** Dual extraction combining direct HTTP GET for initial server HTML and Headless Chromium (`--headless=new --dump-dom`) for hydrated DOM.
+- **Date:** 2026-09-19
+- **Tool Version:** DOMHydrate v1.1.0
+- **Environment:** Windows 11 / Ubuntu 22.04 LTS, Chromium 128+, 1Gbps network.
+- **Command:** `dom-hydrate <url> --wait 3000 --output json`
+- **Raw Observations:** SSR and CSR node counts, title/description/canonical tags, robots meta tags, Schema.org blocks count and serialization diff, internal href anchors count.
+- **Calculation Method:** Node expansion = $\frac{\text{CSR\_nodes} - \text{SSR\_nodes}}{\text{SSR\_nodes}} \times 100\%$; Hydration parity score = composite deduction based on directive, link, or schema mismatches.
+- **Result:** Quantification of DOM inflation and structured data integrity post-hydration.
+- **Limitations:** Does not execute user interaction steps (scrolling, clicking tabs) that may lazy-load further DOM nodes; evaluates initial load hydration parity up to specified wait buffer.
 
 ---
 
