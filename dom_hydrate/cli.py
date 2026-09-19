@@ -11,10 +11,17 @@ from .diff_engine import diff_ssr_csr
 from .formatters import print_terminal_report, export_markdown
 
 def main():
+    from . import __version__
     parser = argparse.ArgumentParser(
+        prog="dom-hydrate",
         description="DOMHydrate: Forensic CSR vs. SSR SEO Diff Engine."
     )
-    parser.add_argument("url", help="Target website URL to inspect")
+    parser.add_argument("url", nargs="?", help="Target website URL to inspect")
+    parser.add_argument(
+        "--version",
+        action="version",
+        version=f"DOMHydrate v{__version__}"
+    )
     parser.add_argument("--wait", type=int, default=4000, help="Client-side hydration wait time in ms (default: 4000)")
     parser.add_argument("--ua", default="chrome", choices=["chrome", "googlebot", "mobile"], help="User-Agent profile")
     parser.add_argument("--output", choices=["terminal", "markdown", "json"], default="terminal", help="Output format")
@@ -22,6 +29,9 @@ def main():
     parser.add_argument("--cloud", action="store_true", help="Generate continuous monitoring audit link on WebAudits.pro")
 
     args = parser.parse_args()
+    if not args.url:
+        parser.print_help()
+        return 0
 
     try:
         print(f"[*] Fetching SSR HTML for {args.url} ...", file=sys.stderr)

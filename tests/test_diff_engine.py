@@ -1,4 +1,7 @@
 import unittest
+import os
+import sys
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from dom_hydrate.diff_engine import diff_ssr_csr
 
 class TestDiffEngine(unittest.TestCase):

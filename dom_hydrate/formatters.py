@@ -14,6 +14,25 @@ try:
 except ImportError:
     HAS_RICH = False
 
+
+def _safe_str(text: Any) -> str:
+    if not isinstance(text, str):
+        text = str(text or "")
+    text = (
+        text.replace("\u2192", "->")
+        .replace("\u2190", "<-")
+        .replace("\u2194", "<->")
+        .replace("\u2022", "*")
+        .replace("\u2019", "'")
+        .replace("\u2018", "'")
+        .replace("\u201c", '"')
+        .replace("\u201d", '"')
+        .replace("\u2014", "-")
+        .replace("\u2013", "-")
+    )
+    return text.encode("ascii", errors="replace").decode("ascii")
+
+
 def print_terminal_report(diff: Dict[str, Any], fetch_meta: Dict[str, Any], render_meta: Dict[str, Any]):
     if not HAS_RICH:
         print(f"\n=== DOMHydrate Audit: {diff['url']} ===")
@@ -33,7 +52,7 @@ def print_terminal_report(diff: Dict[str, Any], fetch_meta: Dict[str, Any], rend
     score_color = "green" if score >= 85 else ("yellow" if score >= 60 else "red")
     header_text = Text()
     header_text.append("DOMHydrate: CSR vs. SSR SEO Diff Engine\n", style="bold cyan")
-    header_text.append(f"Target: {diff['url']}\n", style="bold white")
+    header_text.append(f"Target: {_safe_str(diff['url'])}\n", style="bold white")
     header_text.append(f"Hydration Health Score: {score}/100\n", style=f"bold {score_color}")
     header_text.append(f"SSR TTFB: {fetch_meta.get('ttfb_ms')}ms | Browser Render Time: {render_meta.get('render_time_ms')}ms", style="dim")
 
@@ -61,8 +80,10 @@ def print_terminal_report(diff: Dict[str, Any], fetch_meta: Dict[str, Any], rend
             status = "[green]PARITY[/green]"
 
         # Truncate long strings
-        s_disp = (s_val[:45] + "...") if len(s_val) > 45 else (s_val or "[dim]empty[/dim]")
-        c_disp = (c_val[:45] + "...") if len(c_val) > 45 else (c_val or "[dim]empty[/dim]")
+        s_val_safe = _safe_str(s_val)
+        c_val_safe = _safe_str(c_val)
+        s_disp = (s_val_safe[:45] + "...") if len(s_val_safe) > 45 else (s_val_safe or "[dim]empty[/dim]")
+        c_disp = (c_val_safe[:45] + "...") if len(c_val_safe) > 45 else (c_val_safe or "[dim]empty[/dim]")
         table.add_row(field, s_disp, c_disp, status)
 
     console.print(table)
