@@ -4,6 +4,8 @@ Forensic CSR vs. SSR SEO diff engine with headless Chromium DOM dumping.
 
 Part of the [WebAudits.pro](https://webaudits.pro) technical intelligence platform.
 
+![Terminal Verification](assets/terminal_preview.png)
+
 ---
 
 ## Quickstart
