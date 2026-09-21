@@ -39,6 +39,14 @@ def main(args: list[str] | None = None) -> int:
         print(f"[*] Fetching SSR HTML for {args.url} ...", file=sys.stderr)
         ssr_data = fetch_ssr(args.url, user_agent_type=args.ua)
 
+        if ssr_data["status_code"] != 200:
+            print(
+                f"[!] Error: Target URL returned HTTP {ssr_data['status_code']} on SSR fetch (expected HTTP 200 OK). "
+                f"Hydration parity comparison requires an operational HTTP 200 response.",
+                file=sys.stderr
+            )
+            return 1
+
         print(f"[*] Rendering CSR DOM in headless browser (wait: {args.wait}ms) ...", file=sys.stderr)
         csr_data = render_csr(args.url, wait_ms=args.wait)
 
