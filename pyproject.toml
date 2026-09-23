@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "dom-hydrate"
-version = "1.2.1"
+version = "1.2.2"
 description = "Forensic CSR vs SSR SEO diff engine and dynamic DOM integrity tracer"
 readme = "README.md"
 authors = [
@@ -37,5 +37,5 @@ exclude = ["assets*", "tests*"]
 
 [project.urls]
 "Homepage" = "https://github.com/xcalibur73/dom-hydrate"
-"Cloud Engine" = "https://webaudits.pro/tools/dom-hydrate"
+"Cloud Engine" = "https://webaudits.pro/tools/hydration-audit"
 "Bug Tracker" = "https://github.com/xcalibur73/dom-hydrate/issues"

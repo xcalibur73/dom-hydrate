@@ -5,8 +5,9 @@
 
 
 Forensic CSR vs. SSR SEO diff engine with headless Chromium DOM dumping.
-
 Part of the [WebAudits.pro](https://webaudits.pro) technical intelligence platform.
+
+> **Interactive Web Tool**: Run live SSR hydration and DOM parity audits directly in your browser at [webaudits.pro/tools/hydration-audit](https://webaudits.pro/tools/hydration-audit).
 
 ![Terminal Verification](assets/terminal_preview.png)
 
