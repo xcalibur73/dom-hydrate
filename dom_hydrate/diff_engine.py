@@ -3,6 +3,7 @@ Core SEO Diff Engine for comparing SSR HTML against hydrated CSR DOM.
 """
 
 import json
+import re
 from typing import Dict, Any, List, Set, Tuple
 from urllib.parse import urlparse, urljoin
 from bs4 import BeautifulSoup
@@ -140,7 +141,9 @@ def diff_ssr_csr(ssr_html: str, csr_html: str, base_url: str) -> Dict[str, Any]:
 
     # Robots specific danger check
     robots_danger = False
-    if "noindex" in csr_meta["meta_robots"].lower() and "noindex" not in ssr_meta["meta_robots"].lower():
+    csr_has_noindex = bool(re.search(r'\bnoindex\b', csr_meta.get("meta_robots", ""), re.IGNORECASE))
+    ssr_has_noindex = bool(re.search(r'\bnoindex\b', ssr_meta.get("meta_robots", ""), re.IGNORECASE))
+    if csr_has_noindex and not ssr_has_noindex:
         robots_danger = True
 
     # 2. Social Crawler Parity (Open Graph & Twitter Cards)
