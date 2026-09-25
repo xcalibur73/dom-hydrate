@@ -66,6 +66,49 @@ class TestDiffEngine(unittest.TestCase):
         self.assertIn("Technical evidence", report)
         self.assertIn("Client title", report)
 
+    def test_fetch_ssr_mocked(self):
+        from unittest.mock import patch, MagicMock
+        from dom_hydrate.fetcher import fetch_ssr
+
+        mock_resp = MagicMock()
+        mock_resp.url = "https://example.com"
+        mock_resp.status_code = 200
+        mock_resp.text = "<html><body><h1>SSR</h1></body></html>"
+        mock_resp.content = b"<html><body><h1>SSR</h1></body></html>"
+        mock_resp.headers = {"content-type": "text/html", "server": "cloudflare"}
+        mock_resp.elapsed.total_seconds.return_value = 0.05
+
+        with patch("requests.get", return_value=mock_resp):
+            res = fetch_ssr("https://example.com")
+            self.assertEqual(res["status_code"], 200)
+            self.assertIn("<h1>SSR</h1>", res["html"])
+            self.assertEqual(res["server"], "cloudflare")
+
+    def test_render_csr_mocked(self):
+        from unittest.mock import patch, MagicMock
+        from dom_hydrate.renderer import render_csr
+
+        mock_page = MagicMock()
+        mock_page.content.return_value = "<html><body><h1>CSR Hydrated</h1></body></html>"
+
+        mock_context = MagicMock()
+        mock_context.new_page.return_value = mock_page
+
+        mock_browser = MagicMock()
+        mock_browser.new_context.return_value = mock_context
+
+        mock_playwright = MagicMock()
+        mock_playwright.chromium.launch.return_value = mock_browser
+
+        mock_cm = MagicMock()
+        mock_cm.__enter__.return_value = mock_playwright
+        mock_cm.__exit__.return_value = None
+
+        with patch("playwright.sync_api.sync_playwright", return_value=mock_cm):
+            res = render_csr("https://example.com", wait_ms=0)
+            self.assertIn("<h1>CSR Hydrated</h1>", res["html"])
+            self.assertEqual(res["browser_bin"], "Playwright Chromium (Headless)")
+
 
 if __name__ == "__main__":
     unittest.main()

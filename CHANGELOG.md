@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.3.0] - 2026-09-25
+
+### Added
+- Integrated live raw Server-Side Rendering (SSR) network fetcher with custom user-agent profiles and TTFB recording.
+- Integrated headless Playwright Chromium rendering engine for live Client-Side Rendering (CSR) DOM hydration.
+- Automated unit test suite coverage for live network and headless browser execution paths.
+
+### Changed
+- Replaced mock SSR and CSR stubs with operational runtime fetcher and Playwright Chromium renderer.
+- Bumped project version to 1.3.0 in pyproject.toml and package __init__.py.
+- Added playwright dependency (>=1.40.0) to requirements.txt and pyproject.toml.
+
 ## [1.2.2] - 2026-09-24
 
 ### Fixed

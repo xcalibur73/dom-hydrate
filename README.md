@@ -1,7 +1,7 @@
 # DOMHydrate
 
 > [!NOTE]
-> **Public Architecture & Distribution Notice**: This repository provides the open-source CLI interface, demonstration fixtures, and automated test suite. Full-scale headless browser automation, real-time CDP continuous profiling, and automated white-label client PDF reporting are exclusively hosted on the [WebAudits.pro](https://www.webaudits.pro) cloud platform.
+> **Public Architecture & Distribution Notice**: This repository provides the fully functional open-source CLI diff engine powered by Playwright headless Chromium. Continuous cloud profiling, batch scheduled crawls, and automated white-label client PDF reporting are hosted on the [WebAudits.pro](https://www.webaudits.pro) platform.
 
 
 Forensic CSR vs. SSR SEO diff engine with headless Chromium DOM dumping.
@@ -22,6 +22,7 @@ Install in editable mode and audit SSR vs. CSR markup parity in seconds:
 git clone https://github.com/xcalibur73/dom-hydrate.git
 cd dom-hydrate
 pip install -r requirements.txt
+playwright install chromium
 pip install -e .
 
 # Audit target URL
